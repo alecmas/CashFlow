@@ -1,0 +1,68 @@
+.title {
+	text-align: center;
+}
+
+.links {
+	margin: 0 auto;
+}
+
+h3 {
+	text-align: center;
+	padding-top: 25px;
+}
+
+caption {
+	text-align: left;
+	font-size: 24px;
+}
+
+.accounts table {
+	margin: 0 auto;
+	width: 70%;
+	text-align: left;
+	padding-bottom: 25px;
+}
+
+.accounts td {
+	width: 10%;
+}
+
+.accounts th:nth-child(3) {
+	text-align: right;
+}
+
+.accounts td:nth-child(3) {
+	text-align: right;
+}
+
+.account-form {
+	width: 50%;
+	margin: 0 auto;
+}
+
+.account-buttons {
+	text-align: center;
+}
+
+td input {
+	margin-bottom: 0px;
+}
+
+.total-row td {
+	border-bottom: none;
+}
+
+.amount-input {
+	width: 70%;
+	margin-right: 10px;
+	text-align: right;
+}
+
+.delete {
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.status {
+	text-align: center;
+}

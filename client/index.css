@@ -1,0 +1,10 @@
+.dashboard {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.links {
+	margin: 0 auto;
+}

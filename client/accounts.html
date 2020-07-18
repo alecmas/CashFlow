@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>CashFlow</title>
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+	<header>
+		<h1 class="title">CashFlow</h1>
+	</header>
+	<div class="nav">
+		<table class="links">
+			<tr>
+				<td><a href="accounts.html">Accounts</a></td>
+				<td><a href="transactions.html">Transactions</a></td>
+				<td><a href="budget.html">Budget</a></td>
+				<td><a href="summary.html">YTD Summary</a></td>
+			</tr>
+		</table>
+	</div>
+	<main>
+		<h3>Accounts</h3>
+		<div class="account-buttons">
+			<a class="button button-primary add" href="add-account.html">Add Account</a>
+			<button class="button-primary edit">Edit Accounts</button>
+		</div>
+		<div class="accounts"></div>
+		<div class="status">
+			<img class="loading" src="loading.gif">
+		</div>
+	</main>
+	<script type="text/javascript" src="accounts.js"></script>
+</body>
+</html>
