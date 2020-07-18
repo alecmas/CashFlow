@@ -6,171 +6,169 @@ const accountButtonsElement = document.querySelector('.account-buttons');
 const statusElement = document.querySelector('.status');
 const loadingElement = document.querySelector('.loading');
 
-// object to hold accounts on back-end for later operations
-var accountsMap = {};
-
-// object to hold totals
-var categoryTotalsMap = {};
-
-function saveAccountToMap(account) {
-	const accountObject = { 
-		'institution': account.institution,
-		'accountType': account.accountType,
-		'amount': account.amount,
-		'category': account.category,
-		'updateFlag': 'N'
-	};
-	
-	accountsMap[account._id] = accountObject;
-}
-
-function buildTable(categoryString) {
-	const table = document.createElement('table');
-	table.className = categoryString.toLowerCase();
-
-	const caption = document.createElement('caption');
-	caption.textContent = categoryString;
-
-	const headerRow = document.createElement('tr');
-
-	const headerInstitution = document.createElement('th');
-	headerInstitution.textContent = 'Institution';
-
-	const headerAccountType = document.createElement('th');
-	headerAccountType.textContent = 'Account Type';
-
-	const headerAmount = document.createElement('th');
-	headerAmount.textContent = 'Amount';
-
-	headerRow.appendChild(headerInstitution);
-	headerRow.appendChild(headerAccountType);
-	headerRow.appendChild(headerAmount);
-	table.appendChild(caption);
-	table.appendChild(headerRow);
-
-	return table;
-}
-
-// builds and returns a row for the given account object
+// builds and returns a row for the given account object and using the database id as the row id name
 function buildAccountRow(id, account) {
 	// create row element
 	const row = document.createElement('tr');
 	row.className = 'account-row';
 	row.idName = id;
 
+	// properties to display
+	const properties = ['institution', 'accountType', 'amount'];
+
 	// for each (key, value) pair, create a cell in the row
-	Object.entries(account).forEach(([key, value]) => {
+	properties.forEach(property => {
 		var cell = document.createElement('td');
-		cell.className = key;
-		cell.textContent = value;
+		cell.className = property;
+		cell.textContent = account[property];
 		row.appendChild(cell);
 	});
 
 	return row;
 }
 
-function loadAccounts() {
+// asynchronous function to GET the accounts from the database before trying to display them
+async function getAccounts() {
 	loadingElement.style.display = '';
 
-	fetch(API_URL)
+	var accountsMap = {};
+
+	const response = await fetch(API_URL)
 	.then(response => response.json())
 	.then(accounts => {
 		accounts.forEach(account => {
-			// save account to back-end
-			saveAccountToMap(account);
+			// save account to map
+			var accountObject = { 
+				'institution': account.institution,
+				'accountType': account.accountType,
+				'amount': account.amount,
+				'category': account.category,
+				'updateFlag': 'N'
+			};
+			
+			accountsMap[account._id] = accountObject;
 		});
-
-		displayAccounts(accountsMap);
 	});
-	
+
+	return accountsMap;
 }
 
+// returns distinct categories for the given accounts, along with their properties
+function getDistinctCategories(accounts) {
+	var categories = {};
+	Object.entries(accounts).forEach(([id, account]) => {
+		if (!categories.hasOwnProperty(account.category)) {
+			categories[account.category] = 1;
+		} else {
+			categories[account.category] += 1;
+		}
+	});
+
+	return categories;
+}
+
+// builds tables from distinct categories of accounts
+function buildTables(categories) {
+	Object.entries(categories).forEach(([category, count]) => {
+		const table = document.createElement('table');
+		table.className = category.toLowerCase();
+
+		const caption = document.createElement('caption');
+		caption.textContent = category;
+
+		const headerRow = document.createElement('tr');
+
+		const headerInstitution = document.createElement('th');
+		headerInstitution.textContent = 'Institution';
+
+		const headerAccountType = document.createElement('th');
+		headerAccountType.textContent = 'Account Type';
+
+		const headerAmount = document.createElement('th');
+		headerAmount.textContent = 'Amount';
+
+		headerRow.appendChild(headerInstitution);
+		headerRow.appendChild(headerAccountType);
+		headerRow.appendChild(headerAmount);
+		table.appendChild(caption);
+		table.appendChild(headerRow);
+
+		accountsElement.appendChild(table);
+	});
+}
+
+// returns the totals of each distinct category for the given accounts
+function getTotals(accounts) {
+	var totals = {};
+	Object.entries(accounts).forEach(([id, account]) => {
+		if (!totals.hasOwnProperty(account.category.toLowerCase())) {
+			totals[account.category.toLowerCase()] = parseFloat(account.amount);
+		} else {
+			totals[account.category.toLowerCase()] += parseFloat(account.amount);
+		}
+	});
+
+	return totals;
+}
+
+// build a row displaying the total amount for the given table
+function buildTotalRow(table, total) {
+	const row = document.createElement('tr');
+	row.className = 'total-row';
+
+	const cellBlank = document.createElement('td');
+
+	const cellTotalLabel = document.createElement('td');
+	cellTotalLabel.textContent = 'Total:';
+
+	const cellTotalAmount = document.createElement('td');
+	cellTotalAmount.idName = table.className;
+	cellTotalAmount.className = 'total';
+	cellTotalAmount.textContent = total.toFixed(2);
+
+	row.appendChild(cellBlank);
+	row.appendChild(cellTotalLabel);
+	row.appendChild(cellTotalAmount);
+	table.appendChild(row);
+}
+
+// display accounts to the front-end
 function displayAccounts(accounts) {
-	// if no accounts exist, show message
+	// if no accounts exist, show message saying so
 	if(!accounts || accounts.length == 0) {
 		const noAccountsMessage = document.createElement('p');
 		noAccountsMessage.textContent = 'No accounts exist';
 		statusElement.appendChild(noAccountsMessage);
-	} 
-	// else, load the accounts
-	else {
+	} else {
+		// build tables from the distinct categories of accounts
+		var categories = getDistinctCategories(accounts);
+		buildTables(categories);
+
+		// add each account to the its corresponding category table
 		Object.entries(accounts).forEach(([id, account]) => {
-			console.log('hello');
-			const categoryString = account.category.toString();
-			console.log(categoryString);
-			var table = document.querySelector('.' + categoryString.toLowerCase());
-
-			// if table for the given category for the account has not been made yet, make it
-			if (!table) {
-				table = buildTable(categoryString);
-				accountsElement.appendChild(table);
-			} 
-			
-			// add the account to the its corresponding category table
-			var accountDisplayObject = {
-				'institution': account.institution,
-				'accountType': account.accountType,
-				'amount': account.amount
-			};
-
-			const row = buildAccountRow(id, accountDisplayObject);
+			var table = document.querySelector('.' + account.category.toLowerCase());
+			const row = buildAccountRow(id, account);
 			table.appendChild(row);
-
-			// store amount in totals key value object
-			if (!categoryTotalsMap.hasOwnProperty(categoryString.toLowerCase())) {
-				categoryTotalsMap[categoryString.toLowerCase()] = parseFloat(account.amount);
-			} else {
-				categoryTotalsMap[categoryString.toLowerCase()] += parseFloat(account.amount);
-			}
 		});
 	}
 
-	// read all account category tables and append total rows
-	const tables = document.querySelector('.accounts').querySelectorAll('table');
-
+	// calculate totals and append a total row to each category table
+	var totals = getTotals(accounts);
+	var tables = document.querySelector('.accounts').querySelectorAll('table');
 	tables.forEach(table => { 
-		console.log(table.className);
-		const row = document.createElement('tr');
-		row.className = 'total-row';
-
-		const cellBlank1 = document.createElement('td');
-
-		const cellTotalLabel = document.createElement('td');
-		cellTotalLabel.textContent = 'Total:';
-
-		const cellTotalAmount = document.createElement('td');
-		cellTotalAmount.idName = table.className;
-		cellTotalAmount.className = 'total';
-		cellTotalAmount.textContent = categoryTotalsMap[table.className].toFixed(2);
-
-		row.appendChild(cellBlank1);
-		row.appendChild(cellTotalLabel);
-		row.appendChild(cellTotalAmount);
-		table.appendChild(row);
+		buildTotalRow(table, totals[table.className]);
 	});
 
-	console.log(categoryTotalsMap);
-	console.log(accountsMap);
-
-	// when edit button is clicked, convert cells to edit fields
-	
-	console.log(editButton);
 	loadingElement.style.display = 'none';
 }
 
-loadAccounts();
-
-
-editButton.addEventListener("click", editButtonClick);
-
+// when edit button is clicked, convert all fields to inputs to allow for changes
 function editButtonClick() {
 	var element = event.target;
 	if (element.classList.contains('edit')) {
 		const accountRows = document.querySelectorAll('.account-row');
 		console.log(accountRows);
 		accountRows.forEach(accountRow => {
-			console.log(accountRow.idName);
-
 			const cellInstitution = accountRow.querySelector('.institution');
 			const inputInstitution = document.createElement('input');
 			inputInstitution.className = 'u-full-width institution-input';
@@ -196,14 +194,12 @@ function editButtonClick() {
 			cellAmount.appendChild(inputAmount);
 
 			// create trash can row for deletion
-			
 			const deleteIcon = document.createElement('i');
 			deleteIcon.className = 'material-icons delete';
 			deleteIcon.textContent = 'delete_forever';
 			deleteIcon.style.color = 'red';
 			deleteIcon.addEventListener("click", deleteButtonClick);
 			cellAmount.appendChild(deleteIcon);
-			
 		});
 
 		addButton.style.display = 'none';
@@ -216,173 +212,192 @@ function editButtonClick() {
 	}
 }
 
-// when save button is clicked, post changes to DB
+// when save button is clicked, post changes to the db
 function saveButtonClick() {
- 	var element = event.target;
+	var element = event.target;
  	var saveAccountsMap = {}; // map to hold updated values
 
  	if (element.classList.contains('save')) {
  		loadingElement.style.display = '';
 
-		console.log('I think it worked');
- 		const accountRows = document.querySelectorAll('.account-row');
-		accountRows.forEach(accountRow => {
+ 		// have to get accounts from db before operating
+ 		getAccounts().then(accounts => { 
+			console.log(accounts);
 
-			const id = accountRow.idName;
+			var categoryTotalsMap = getTotals(accounts);
 
-			const inputInstitution = accountRow.querySelector('.institution-input');
-			const cellInstitution = accountRow.querySelector('.institution');
+	 		const accountRows = document.querySelectorAll('.account-row');
+			accountRows.forEach(accountRow => {
 
-			// if the new value does not match the old value, it has been updated
-			if (!(accountsMap[id].institution === inputInstitution.value)) {
-				accountsMap[id].institution = inputInstitution.value;
-				accountsMap[id].updateFlag = 'Y';
-			}
+				const id = accountRow.idName;
 
-			cellInstitution.textContent = inputInstitution.value;
+				const inputInstitution = accountRow.querySelector('.institution-input');
+				const cellInstitution = accountRow.querySelector('.institution');
 
-			const inputAccountType = accountRow.querySelector('.account-type-input');
-			const cellAccountType = accountRow.querySelector('.accountType');
+				// if the new value does not match the old value, it has been updated
+				if (!(accounts[id].institution === inputInstitution.value)) {
+					accounts[id].institution = inputInstitution.value;
+					accounts[id].updateFlag = 'Y';
+				}
 
-			if (!(accountsMap[id].accountType === inputAccountType.value)) {
-				accountsMap[id].accountType = inputAccountType.value;
-				accountsMap[accountRow.idName].updateFlag = 'Y';
-			}
+				cellInstitution.textContent = inputInstitution.value;
 
-			cellAccountType.textContent = inputAccountType.value;
+				const inputAccountType = accountRow.querySelector('.account-type-input');
+				const cellAccountType = accountRow.querySelector('.accountType');
 
-			const inputAmount = accountRow.querySelector('.amount-input');
-			const cellAmount = accountRow.querySelector('.amount');
+				if (!(accounts[id].accountType === inputAccountType.value)) {
+					accounts[id].accountType = inputAccountType.value;
+					accounts[accountRow.idName].updateFlag = 'Y';
+				}
+
+				cellAccountType.textContent = inputAccountType.value;
+
+				const inputAmount = accountRow.querySelector('.amount-input');
+				const cellAmount = accountRow.querySelector('.amount');
+
+				if (!(accounts[id].amount === inputAmount.value)) {
+					// update total
+					const category = accounts[id].category;
+					categoryTotalsMap[category.toLowerCase()] -= parseFloat(accounts[id].amount); // subtract old amount
+					categoryTotalsMap[category.toLowerCase()] += parseFloat(inputAmount.value); // add new amount
+					
+					accounts[id].amount = inputAmount.value;
+					accounts[accountRow.idName].updateFlag = 'Y';
+				}
+	 			
+				cellAmount.textContent = inputAmount.value;
+
+				inputInstitution.remove();
+				inputAccountType.remove();
+				inputAmount.remove();
+	 		});
 			
-			if (!(accountsMap[id].amount === inputAmount.value)) {
-				// update total
-				const category = accountsMap[id].category;
-				categoryTotalsMap[category.toLowerCase()] -= parseFloat(accountsMap[id].amount); // subtract old amount
-				categoryTotalsMap[category.toLowerCase()] += parseFloat(inputAmount.value); // add new amount
-				
-				accountsMap[id].amount = inputAmount.value;
-				accountsMap[accountRow.idName].updateFlag = 'Y';
-			}
- 			
-			cellAmount.textContent = inputAmount.value;
-
-			inputInstitution.remove();
-			inputAccountType.remove();
-			inputAmount.remove();
- 		});
-		
-		// refresh totals
-		const totals = document.querySelectorAll('.total');
-		console.log(totals);
-		totals.forEach(total => {
-			console.log(total.idName);
-			total.textContent = categoryTotalsMap[total.idName].toFixed(2);
-		});
-
- 		console.log(JSON.stringify(accountsMap));
-
-		//update db
-		fetch(API_URL, {
-			method: 'PUT',
-			body: JSON.stringify(accountsMap),
-			headers: {
-				'content-type': 'application/json'
-			}
-		})
-		.then(response => response.json())
-		.then(updatedAccounts => {
-			loadingElement.style.display = 'none';
-		  	console.log('client received update response');
-		  	
-		  	if (updatedAccounts.failedStatus) {
-		  		console.log('Update failed with response status ' + updatedAccounts.failedStatus);
-		  		var failMessage = document.createElement('p');
-		  		failMessage.style.color = '#cf5353';
-		  		failMessage.textContent = 'Failed to update accounts.';
-		  		statusElement.appendChild(failMessage);
-		  		setTimeout(function() {
-		  			failMessage.remove();
-		  		}, 3000);
-		  	} else {
-		  		console.log('Update succeeded!');
-		  		var successMessage = document.createElement('p');
-		  		successMessage.style.color = '#53cf74';
-		  		successMessage.textContent = 'Updated accounts successfully.';
-		  		statusElement.appendChild(successMessage);
-		  		setTimeout(function() {
-		  			successMessage.remove();
-		  		}, 3000);
-		  	}
-		});
-
- 		element.style.display = 'none';
- 		addButton.style.display = '';
- 		editButton.style.display = '';
- 	}
-}
-
-function deleteButtonClick() {
- 	var element = event.target;
-
- 	if (element.classList.contains('delete')) {
- 		var confirmation = confirm('Are you sure you\'d like to delete this account?');
- 		var id = element.parentElement.parentElement.idName;
- 		if (confirmation) {
- 			loadingElement.style.display = '';
-
- 			var idObject = { 
- 				'id': id
- 			};
-
- 			fetch(API_URL, {
- 				method: 'DELETE',
- 				body: JSON.stringify(idObject),
- 				headers: {
- 					'content-type': 'application/json'
- 				}
- 			})
- 			.then(response => response.json())
- 			.then(deletedAccount => {
- 				loadingElement.style.display = 'none';
-
- 				if (deletedAccount.failedStatus) {
-			  		console.log('Delete failed with response status ' + deletedAccount.failedStatus);
-			  		var failMessage = document.createElement('p');
-			  		failMessage.style.color = '#cf5353';
-			  		failMessage.textContent = 'Failed to delete account.';
-			  		statusElement.appendChild(failMessage);
-			  		setTimeout(function() {
-			  			failMessage.remove();
-			  		}, 3000);
-		  		} else {
-			  		console.log('Delete succeeded!');
-			  		var successMessage = document.createElement('p');
-			  		successMessage.style.color = '#53cf74';
-			  		successMessage.textContent = 'Deleted account successfully.';
-			  		statusElement.appendChild(successMessage);
-			  		setTimeout(function() {
-			  			successMessage.remove();
-			  		}, 3000);
-		  		}
- 			});
-
- 			// subtract amount from totals
- 			var category = accountsMap[id].category.toLowerCase();
- 			categoryTotalsMap[category] -= accountsMap[id].amount;
-
- 			// remove the account row and account from map
- 			element.parentElement.parentElement.remove();
- 			delete accountsMap[id];
- 			console.log(accountsMap);
-
- 			// refresh totals
+			// refresh totals
 			const totals = document.querySelectorAll('.total');
+			console.log(totals);
 			totals.forEach(total => {
 				console.log(total.idName);
 				total.textContent = categoryTotalsMap[total.idName].toFixed(2);
 			});
 
- 			console.log('Account deleted');
- 		}
+	 		console.log(JSON.stringify(accounts));
+
+			//update db
+			fetch(API_URL, {
+				method: 'PUT',
+				body: JSON.stringify(accounts),
+				headers: {
+					'content-type': 'application/json'
+				}
+			})
+			.then(response => response.json())
+			.then(updatedAccounts => {
+				loadingElement.style.display = 'none';
+			  	console.log('client received update response');
+			  	
+			  	if (updatedAccounts.failedStatus) {
+			  		console.log('Update failed with response status ' + updatedAccounts.failedStatus);
+			  		var failMessage = document.createElement('p');
+			  		failMessage.style.color = '#cf5353';
+			  		failMessage.textContent = 'Failed to update accounts.';
+			  		statusElement.appendChild(failMessage);
+			  		setTimeout(function() {
+			  			failMessage.remove();
+			  		}, 3000);
+			  	} else {
+			  		console.log('Update succeeded!');
+			  		var successMessage = document.createElement('p');
+			  		successMessage.style.color = '#53cf74';
+			  		successMessage.textContent = 'Updated accounts successfully.';
+			  		statusElement.appendChild(successMessage);
+			  		setTimeout(function() {
+			  			successMessage.remove();
+			  		}, 3000);
+			  	}
+			});
+
+	 		element.style.display = 'none';
+	 		addButton.style.display = '';
+	 		editButton.style.display = '';
+ 		});
+ 	}
+}
+
+// when delete button is clicked, delete the account from the db
+function deleteButtonClick() {
+ 	var element = event.target;
+
+ 	if (element.classList.contains('delete')) {
+ 		var confirmation = confirm('Are you sure you\'d like to delete this account?');
+
+ 		// have to get accounts from db before operating
+ 		getAccounts().then(accounts => { 
+	 		var id = element.parentElement.parentElement.idName;
+	 		if (confirmation) {
+	 			loadingElement.style.display = '';
+
+	 			var idObject = { 
+	 				'id': id
+	 			};
+
+	 			fetch(API_URL, {
+	 				method: 'DELETE',
+	 				body: JSON.stringify(idObject),
+	 				headers: {
+	 					'content-type': 'application/json'
+	 				}
+	 			})
+	 			.then(response => response.json())
+	 			.then(deletedAccount => {
+	 				loadingElement.style.display = 'none';
+
+	 				if (deletedAccount.failedStatus) {
+				  		console.log('Delete failed with response status ' + deletedAccount.failedStatus);
+				  		var failMessage = document.createElement('p');
+				  		failMessage.style.color = '#cf5353';
+				  		failMessage.textContent = 'Failed to delete account.';
+				  		statusElement.appendChild(failMessage);
+				  		setTimeout(function() {
+				  			failMessage.remove();
+				  		}, 3000);
+			  		} else {
+				  		console.log('Delete succeeded!');
+				  		var successMessage = document.createElement('p');
+				  		successMessage.style.color = '#53cf74';
+				  		successMessage.textContent = 'Deleted account successfully.';
+				  		statusElement.appendChild(successMessage);
+				  		setTimeout(function() {
+				  			successMessage.remove();
+				  		}, 3000);
+			  		}
+	 			});
+
+	 			// subtract amount from totals
+	 			var categoryTotalsMap = getTotals(accounts);
+	 			var category = accounts[id].category.toLowerCase();
+	 			categoryTotalsMap[category] -= accounts[id].amount;
+
+	 			// remove the account row and account from map
+	 			element.parentElement.parentElement.remove();
+	 			delete accounts[id];
+	 			console.log(accounts);
+
+	 			// refresh totals
+				const totals = document.querySelectorAll('.total');
+				totals.forEach(total => {
+					console.log(total.idName);
+					total.textContent = categoryTotalsMap[total.idName].toFixed(2);
+				});
+
+	 			console.log('Account deleted');
+	 		}
+	 	});
  	}
  }
+
+ // GET the accounts first, then display them
+getAccounts().then(accounts => {
+	displayAccounts(accounts);
+});
+
+editButton.addEventListener("click", editButtonClick);
