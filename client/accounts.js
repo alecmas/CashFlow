@@ -42,8 +42,7 @@ async function getAccounts() {
 				'institution': account.institution,
 				'accountType': account.accountType,
 				'amount': account.amount,
-				'category': account.category,
-				'updateFlag': 'N'
+				'category': account.category
 			};
 			
 			accountsMap[account._id] = accountObject;
@@ -132,6 +131,11 @@ function buildTotalRow(table, total) {
 	table.appendChild(row);
 }
 
+// refresh the content of the total rows
+function refreshTotals(accounts) {
+
+}
+
 // display accounts to the front-end
 function displayAccounts(accounts) {
 	// if no accounts exist, show message saying so
@@ -162,29 +166,12 @@ function displayAccounts(accounts) {
 	loadingElement.style.display = 'none';
 }
 
-// when edit button is clicked, convert all fields to inputs to allow for changes
+// when edit button is clicked, convert amount fields to inputs to allow for changes
 function editButtonClick() {
 	var element = event.target;
 	if (element.classList.contains('edit')) {
 		const accountRows = document.querySelectorAll('.account-row');
-		console.log(accountRows);
 		accountRows.forEach(accountRow => {
-			const cellInstitution = accountRow.querySelector('.institution');
-			const inputInstitution = document.createElement('input');
-			inputInstitution.className = 'u-full-width institution-input';
-			inputInstitution.type = 'text';
-			inputInstitution.value = cellInstitution.textContent;
-			cellInstitution.textContent = '';
-			cellInstitution.appendChild(inputInstitution);
-
-			const cellAccountType = accountRow.querySelector('.accountType');
-			const inputAccountType = document.createElement('input');
-			inputAccountType.className = 'u-full-width account-type-input';
-			inputAccountType.type = 'text';
-			inputAccountType.value = cellAccountType.textContent;
-			cellAccountType.textContent = '';
-			cellAccountType.appendChild(inputAccountType);
-
 			const cellAmount = accountRow.querySelector('.amount');
 			const inputAmount = document.createElement('input');
 			inputAmount.className = 'amount-input';
@@ -212,63 +199,72 @@ function editButtonClick() {
 	}
 }
 
+// asynchronous function to PUT the accounts before trying to get them again
+async function putAccounts(accounts) {
+	loadingElement.style.display = '';
+
+	const response = await fetch(API_URL, {
+		method: 'PUT',
+		body: JSON.stringify(accounts),
+		headers: {
+			'content-type': 'application/json'
+		}
+	})
+	.then(response => response.json())
+	.then(updateStatus => {
+		loadingElement.style.display = 'none';
+	  	console.log('client received update response');
+	  	
+	  	if (updateStatus.failedStatus) {
+	  		console.log('Update failed with response status ' + updateStatus.failedStatus);
+	  		var failMessage = document.createElement('p');
+	  		failMessage.style.color = '#cf5353';
+	  		failMessage.textContent = 'Failed to update accounts.';
+	  		statusElement.appendChild(failMessage);
+	  		setTimeout(function() {
+	  			failMessage.remove();
+	  		}, 3000);
+	  	} else {
+	  		console.log('Update succeeded!');
+	  		var successMessage = document.createElement('p');
+	  		successMessage.style.color = '#53cf74';
+	  		successMessage.textContent = 'Updated accounts successfully.';
+	  		statusElement.appendChild(successMessage);
+	  		setTimeout(function() {
+	  			successMessage.remove();
+	  		}, 3000);
+	  	}
+	});
+}
+
 // when save button is clicked, post changes to the db
 function saveButtonClick() {
 	var element = event.target;
- 	var saveAccountsMap = {}; // map to hold updated values
 
  	if (element.classList.contains('save')) {
  		loadingElement.style.display = '';
 
  		// have to get accounts from db before operating
  		getAccounts().then(accounts => { 
-			console.log(accounts);
-
 			var categoryTotalsMap = getTotals(accounts);
+			var updatedAccounts = {}; // map to hold updated values
 
 	 		const accountRows = document.querySelectorAll('.account-row');
 			accountRows.forEach(accountRow => {
-
 				const id = accountRow.idName;
-
-				const inputInstitution = accountRow.querySelector('.institution-input');
-				const cellInstitution = accountRow.querySelector('.institution');
-
-				// if the new value does not match the old value, it has been updated
-				if (!(accounts[id].institution === inputInstitution.value)) {
-					accounts[id].institution = inputInstitution.value;
-					accounts[id].updateFlag = 'Y';
-				}
-
-				cellInstitution.textContent = inputInstitution.value;
-
-				const inputAccountType = accountRow.querySelector('.account-type-input');
-				const cellAccountType = accountRow.querySelector('.accountType');
-
-				if (!(accounts[id].accountType === inputAccountType.value)) {
-					accounts[id].accountType = inputAccountType.value;
-					accounts[accountRow.idName].updateFlag = 'Y';
-				}
-
-				cellAccountType.textContent = inputAccountType.value;
-
 				const inputAmount = accountRow.querySelector('.amount-input');
 				const cellAmount = accountRow.querySelector('.amount');
 
-				if (!(accounts[id].amount === inputAmount.value)) {
+				if (accounts[id].amount !== inputAmount.value) {
 					// update total
 					const category = accounts[id].category;
 					categoryTotalsMap[category.toLowerCase()] -= parseFloat(accounts[id].amount); // subtract old amount
 					categoryTotalsMap[category.toLowerCase()] += parseFloat(inputAmount.value); // add new amount
 					
-					accounts[id].amount = inputAmount.value;
-					accounts[accountRow.idName].updateFlag = 'Y';
+					updatedAccounts[id] = inputAmount.value;
 				}
 	 			
 				cellAmount.textContent = inputAmount.value;
-
-				inputInstitution.remove();
-				inputAccountType.remove();
 				inputAmount.remove();
 	 		});
 			
@@ -280,41 +276,7 @@ function saveButtonClick() {
 				total.textContent = categoryTotalsMap[total.idName].toFixed(2);
 			});
 
-	 		console.log(JSON.stringify(accounts));
-
-			//update db
-			fetch(API_URL, {
-				method: 'PUT',
-				body: JSON.stringify(accounts),
-				headers: {
-					'content-type': 'application/json'
-				}
-			})
-			.then(response => response.json())
-			.then(updatedAccounts => {
-				loadingElement.style.display = 'none';
-			  	console.log('client received update response');
-			  	
-			  	if (updatedAccounts.failedStatus) {
-			  		console.log('Update failed with response status ' + updatedAccounts.failedStatus);
-			  		var failMessage = document.createElement('p');
-			  		failMessage.style.color = '#cf5353';
-			  		failMessage.textContent = 'Failed to update accounts.';
-			  		statusElement.appendChild(failMessage);
-			  		setTimeout(function() {
-			  			failMessage.remove();
-			  		}, 3000);
-			  	} else {
-			  		console.log('Update succeeded!');
-			  		var successMessage = document.createElement('p');
-			  		successMessage.style.color = '#53cf74';
-			  		successMessage.textContent = 'Updated accounts successfully.';
-			  		statusElement.appendChild(successMessage);
-			  		setTimeout(function() {
-			  			successMessage.remove();
-			  		}, 3000);
-			  	}
-			});
+			putAccounts(updatedAccounts);
 
 	 		element.style.display = 'none';
 	 		addButton.style.display = '';
@@ -395,7 +357,7 @@ function deleteButtonClick() {
  	}
  }
 
- // GET the accounts first, then display them
+// GET the accounts then display them
 getAccounts().then(accounts => {
 	displayAccounts(accounts);
 });

@@ -66,14 +66,10 @@ app.post('/accounts', (req, res) => {
 });
 
 app.put('/accounts', (req, res) => {
-	Object.entries(req.body).forEach(([id, account]) => {
-		if (account.updateFlag.toString() === 'Y') {
-			accounts.update({_id: id}, {$set: {institution: account.institution.toString()}});
-			accounts.update({_id: id}, {$set: {accountType: account.accountType.toString()}});
-			accounts.update({_id: id}, {$set: {amount: account.amount.toString()}});
-			accounts.update({_id: id}, {$set: {lastModifiedDate: new Date()}});
-			console.log('[SERVER] Account ID ' + id + ' was successfully updated');
-		}
+	Object.entries(req.body).forEach(([id, amount]) => {
+		accounts.update({_id: id}, {$set: {amount: amount.toString()}});
+		accounts.update({_id: id}, {$set: {lastModifiedDate: new Date()}});
+		console.log('[SERVER] Account ID ' + id + ' was successfully updated');
 	});
 
 	if (res.statusCode !== 200) {
