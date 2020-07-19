@@ -199,11 +199,11 @@ function editButtonClick() {
 	}
 }
 
-// asynchronous function to PUT the accounts before trying to get them again
-async function putAccounts(accounts) {
+// function to PUT account updates into the db
+function putAccounts(accounts) {
 	loadingElement.style.display = '';
 
-	const response = await fetch(API_URL, {
+	fetch(API_URL, {
 		method: 'PUT',
 		body: JSON.stringify(accounts),
 		headers: {
@@ -213,8 +213,13 @@ async function putAccounts(accounts) {
 	.then(response => response.json())
 	.then(updateStatus => {
 		loadingElement.style.display = 'none';
-	  	console.log('client received update response');
 	  	
+		// refresh accounts after update to db
+	  	getAccounts().then(accounts => {
+	  		displayAccounts(accounts);
+	  	});
+
+	  	// show a status message for user feedback
 	  	if (updateStatus.failedStatus) {
 	  		console.log('Update failed with response status ' + updateStatus.failedStatus);
 	  		var failMessage = document.createElement('p');
@@ -240,42 +245,26 @@ async function putAccounts(accounts) {
 // when save button is clicked, post changes to the db
 function saveButtonClick() {
 	var element = event.target;
-
  	if (element.classList.contains('save')) {
  		loadingElement.style.display = '';
 
  		// have to get accounts from db before operating
- 		getAccounts().then(accounts => { 
-			var categoryTotalsMap = getTotals(accounts);
-			var updatedAccounts = {}; // map to hold updated values
+ 		getAccounts().then(accounts => {
+			// map to hold updated values
+			var updatedAccounts = {};
 
 	 		const accountRows = document.querySelectorAll('.account-row');
 			accountRows.forEach(accountRow => {
 				const id = accountRow.idName;
 				const inputAmount = accountRow.querySelector('.amount-input');
-				const cellAmount = accountRow.querySelector('.amount');
 
 				if (accounts[id].amount !== inputAmount.value) {
-					// update total
-					const category = accounts[id].category;
-					categoryTotalsMap[category.toLowerCase()] -= parseFloat(accounts[id].amount); // subtract old amount
-					categoryTotalsMap[category.toLowerCase()] += parseFloat(inputAmount.value); // add new amount
-					
 					updatedAccounts[id] = inputAmount.value;
 				}
-	 			
-				cellAmount.textContent = inputAmount.value;
-				inputAmount.remove();
 	 		});
-			
-			// refresh totals
-			const totals = document.querySelectorAll('.total');
-			console.log(totals);
-			totals.forEach(total => {
-				console.log(total.idName);
-				total.textContent = categoryTotalsMap[total.idName].toFixed(2);
-			});
 
+			// clear accounts page, perform update, and refresh accounts
+			accountsElement.innerHTML = '';
 			putAccounts(updatedAccounts);
 
 	 		element.style.display = 'none';
