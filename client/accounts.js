@@ -1,8 +1,6 @@
 const API_URL = 'http://localhost:5000/accounts';
 const accountsElement = document.querySelector('.accounts');
-const addButton = document.querySelector('.add')
-const editButton = document.querySelector('.edit');
-const saveButton = document.querySelector('.save');
+const saveEditButton = document.querySelector('.save-edit');
 const accountButtonsElement = document.querySelector('.account-buttons');
 const statusElement = document.querySelector('.status');
 const loadingElement = document.querySelector('.loading');
@@ -135,6 +133,7 @@ function buildTotalRow(table, total) {
 // display accounts to the front-end
 function displayAccounts(accounts) {
 	accountsElement.innerHTML = '';
+	accountButtonsElement.innerHTML = '';
 
 	// if no accounts exist, show message saying so
 	if(!accounts || Object.keys(accounts).length === 0) {
@@ -161,13 +160,135 @@ function displayAccounts(accounts) {
 		buildTotalRow(table, totals[table.className]);
 	});
 
+	var addButton = document.createElement('button');
+	addButton.className = 'button-primary add';
+	addButton.textContent = 'Add Account';
+	addButton.addEventListener("click", addButtonClick);
+	accountButtonsElement.appendChild(addButton);
+
+	var editButton = document.createElement('button');
+	editButton.className = 'button-primary edit';
+	editButton.textContent = 'Edit Accounts';
+	editButton.addEventListener("click", editButtonClick);
+	accountButtonsElement.appendChild(editButton);
+
+	accountButtonsElement.style.display = '';
 	loadingElement.style.display = 'none';
+}
+
+// when add button is clicked, show form on this page to add account
+function addButtonClick() {
+	var element = event.target;
+	if (element.classList.contains('add')) {
+		accountsElement.innerHTML = '';
+		accountButtonsElement.innerHTML = '';
+
+		var form = document.createElement('form');
+		form.className = 'account-form';
+		form.setAttribute('autocomplete', 'off');
+
+		var labelInstitution = document.createElement('label');
+		labelInstitution.setAttribute('for', 'institution');
+		labelInstitution.textContent = 'Institution';
+		var inputInstitution = document.createElement('input');
+		inputInstitution.className = 'u-full-width';
+		inputInstitution.idName = 'institution';
+		inputInstitution.setAttribute('type', 'text');
+		inputInstitution.setAttribute('name', 'institution');
+
+		var labelAccountType = document.createElement('label');
+		labelAccountType.setAttribute('for', 'account-type');
+		labelAccountType.textContent = 'Account Type';
+		var inputAccountType = document.createElement('input');
+		inputAccountType.className = 'u-full-width';
+		inputAccountType.idName = 'account-type';
+		inputAccountType.setAttribute('type', 'text');
+		inputAccountType.setAttribute('name', 'account-type');
+
+		var labelAmount = document.createElement('label');
+		labelAmount.setAttribute('for', 'amount');
+		labelAmount.textContent = 'Amount';
+		var inputAmount = document.createElement('input');
+		inputAmount.className = 'u-full-width';
+		inputAmount.idName = 'amount';
+		inputAmount.setAttribute('type', 'text');
+		inputAmount.setAttribute('name', 'amount');
+
+		var labelCategory = document.createElement('label');
+		labelCategory.setAttribute('for', 'category');
+		labelCategory.textContent = 'Category';
+		var inputCategory = document.createElement('input');
+		inputCategory.className = 'u-full-width';
+		inputCategory.idName = 'category';
+		inputCategory.setAttribute('type', 'text');
+		inputCategory.setAttribute('name', 'category');
+
+		var buttonDiv = document.createElement('div');
+		buttonDiv.style.textAlign = 'center';
+
+		var saveAddButton = document.createElement('button');
+		saveAddButton.className = 'button-primary';
+		saveAddButton.textContent = 'Save Account';
+		buttonDiv.appendChild(saveAddButton);
+
+		form.appendChild(labelInstitution);
+		form.appendChild(inputInstitution);
+		form.appendChild(labelAccountType);
+		form.appendChild(inputAccountType);
+		form.appendChild(labelAmount);
+		form.appendChild(inputAmount);
+		form.appendChild(labelCategory);
+		form.appendChild(inputCategory);
+		form.appendChild(buttonDiv);
+		accountsElement.appendChild(form);
+
+		form.addEventListener('submit', (submit) => {
+ 			// stop default submission action so we can handle it
+			submit.preventDefault();
+
+			console.log('form submitted');
+
+			const formData = new FormData(form);
+			const institution = formData.get('institution');
+			const accountType = formData.get('account-type');
+			const amount = formData.get('amount');
+			const category = formData.get('category');
+
+			const account = {
+				institution,
+				accountType,
+				amount,
+				category
+			};
+
+			console.log(JSON.stringify(account));
+
+			fetch(API_URL, {
+				method: 'POST',
+				body: JSON.stringify(account),
+				headers: {
+					'content-type': 'application/json'
+				}
+			})
+			.then(response => response.json())
+			.then(createdAccount => {
+			  	console.log(createdAccount);
+
+				// refresh accounts after add to db
+			  	getAccounts().then(accounts => {
+			  		displayAccounts(accounts);
+			  	});
+			 });
+		});
+	}
 }
 
 // when edit button is clicked, convert amount fields to inputs to allow for changes
 function editButtonClick() {
 	var element = event.target;
 	if (element.classList.contains('edit')) {
+		accountButtonsElement.innerHTML = '';
+
 		const accountRows = document.querySelectorAll('.account-row');
 		accountRows.forEach(accountRow => {
 			const cellAmount = accountRow.querySelector('.amount');
@@ -187,9 +308,12 @@ function editButtonClick() {
 			cellAmount.appendChild(deleteIcon);
 		});
 
-		addButton.style.display = 'none';
-		editButton.style.display = 'none';
-		saveButton.style.display = '';
+		var saveEditButton = document.createElement('button');
+		saveEditButton.className = 'button-primary save-edit';
+		saveEditButton.textContent = 'Save Changes';
+		saveEditButton.addEventListener("click", saveEditButtonClick);
+
+		accountButtonsElement.appendChild(saveEditButton);
 	}
 }
 
@@ -239,9 +363,10 @@ function putAccounts(updatedAccounts) {
 }
 
 // when save button is clicked, post changes to the db
-function saveButtonClick() {
+function saveEditButtonClick() {
 	var element = event.target;
- 	if (element.classList.contains('save')) {
+ 	if (element.classList.contains('save-edit')) {
+ 		accountButtonsElement.innerHTML = '';
  		loadingElement.style.display = '';
 
  		// get accounts from db for comparison
@@ -262,9 +387,19 @@ function saveButtonClick() {
 			// perform update and refresh accounts
 			putAccounts(updatedAccounts);
 
-	 		element.style.display = 'none';
-	 		addButton.style.display = '';
-	 		editButton.style.display = '';
+	 		element.remove();
+
+	 		var addButton = document.createElement('button');
+			addButton.className = 'button-primary add';
+			addButton.textContent = 'Add Account';
+			addButton.addEventListener("click", addButtonClick);
+			accountButtonsElement.appendChild(addButton);
+
+			var editButton = document.createElement('button');
+			editButton.className = 'button-primary edit';
+			editButton.textContent = 'Edit Accounts';
+			editButton.addEventListener("click", editButtonClick);
+			accountButtonsElement.appendChild(editButton);
  		});
  	}
 }
@@ -319,9 +454,10 @@ function deleteButtonClick() {
  			// delete account and refresh accounts
  			deleteAccount({'id': id});
 
- 			saveButton.style.display = 'none';
-	 		addButton.style.display = '';
-	 		editButton.style.display = '';
+ 			var saveEditButton = document.querySelector('.save-edit');
+ 			saveEditButton.remove();
+
+	 		accountButtonsElement.style.display = '';
  		}
  	}
  }
@@ -330,6 +466,3 @@ function deleteButtonClick() {
 getAccounts().then(accounts => {
 	displayAccounts(accounts);
 });
-
-editButton.addEventListener("click", editButtonClick);
-saveButton.addEventListener("click", saveButtonClick);

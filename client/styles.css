@@ -20,7 +20,7 @@ caption {
 	margin: 0 auto;
 	width: 70%;
 	text-align: left;
-	padding-bottom: 25px;
+	padding-bottom: 20px;
 }
 
 .accounts td {
@@ -42,6 +42,7 @@ caption {
 
 .account-buttons {
 	text-align: center;
+	margin-bottom: 10px;
 }
 
 td input {
@@ -65,4 +66,8 @@ td input {
 
 .status {
 	text-align: center;
+}
+
+button {
+	margin: 10px 5px 0px 5px;
 }
