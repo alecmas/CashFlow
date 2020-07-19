@@ -2,6 +2,7 @@ const API_URL = 'http://localhost:5000/accounts';
 const accountsElement = document.querySelector('.accounts');
 const addButton = document.querySelector('.add')
 const editButton = document.querySelector('.edit');
+const saveButton = document.querySelector('.save');
 const accountButtonsElement = document.querySelector('.account-buttons');
 const statusElement = document.querySelector('.status');
 const loadingElement = document.querySelector('.loading');
@@ -138,6 +139,8 @@ function refreshTotals(accounts) {
 
 // display accounts to the front-end
 function displayAccounts(accounts) {
+	accountsElement.innerHTML = '';
+
 	// if no accounts exist, show message saying so
 	if(!accounts || accounts.length == 0) {
 		const noAccountsMessage = document.createElement('p');
@@ -191,11 +194,7 @@ function editButtonClick() {
 
 		addButton.style.display = 'none';
 		editButton.style.display = 'none';
-		const saveButton = document.createElement('button');
-		saveButton.className = 'button-primary save';
-		saveButton.textContent = 'Save Changes';
-		saveButton.addEventListener("click", saveButtonClick);
-		accountButtonsElement.appendChild(saveButton);
+		saveButton.style.display = '';
 	}
 }
 
@@ -248,7 +247,7 @@ function saveButtonClick() {
  	if (element.classList.contains('save')) {
  		loadingElement.style.display = '';
 
- 		// have to get accounts from db before operating
+ 		// get accounts from db for comparison
  		getAccounts().then(accounts => {
 			// map to hold updated values
 			var updatedAccounts = {};
@@ -263,8 +262,7 @@ function saveButtonClick() {
 				}
 	 		});
 
-			// clear accounts page, perform update, and refresh accounts
-			accountsElement.innerHTML = '';
+			// perform update and refresh accounts
 			putAccounts(updatedAccounts);
 
 	 		element.style.display = 'none';
@@ -274,75 +272,60 @@ function saveButtonClick() {
  	}
 }
 
+function deleteAccount(id) {
+	fetch(API_URL, {
+		method: 'DELETE',
+		body: JSON.stringify(id),
+		headers: {
+			'content-type': 'application/json'
+		}
+	})
+	.then(response => response.json())
+	.then(updateStatus => {
+		// refresh accounts after update to db
+	  	getAccounts().then(accounts => {
+	  		displayAccounts(accounts);
+	  	});
+
+		if (updateStatus.failedStatus) {
+	  		console.log('Delete failed with response status ' + updateStatus.failedStatus);
+	  		var failMessage = document.createElement('p');
+	  		failMessage.style.color = '#cf5353';
+	  		failMessage.textContent = 'Failed to delete account.';
+	  		statusElement.appendChild(failMessage);
+	  		setTimeout(function() {
+	  			failMessage.remove();
+	  		}, 3000);
+		} else {
+	  		console.log('Delete succeeded!');
+	  		var successMessage = document.createElement('p');
+	  		successMessage.style.color = '#53cf74';
+	  		successMessage.textContent = 'Deleted account successfully.';
+	  		statusElement.appendChild(successMessage);
+	  		setTimeout(function() {
+	  			successMessage.remove();
+	  		}, 3000);
+		}
+	});
+}
+
 // when delete button is clicked, delete the account from the db
 function deleteButtonClick() {
  	var element = event.target;
-
  	if (element.classList.contains('delete')) {
  		var confirmation = confirm('Are you sure you\'d like to delete this account?');
 
- 		// have to get accounts from db before operating
- 		getAccounts().then(accounts => { 
-	 		var id = element.parentElement.parentElement.idName;
-	 		if (confirmation) {
-	 			loadingElement.style.display = '';
+ 		if (confirmation) {
+ 			loadingElement.style.display = '';
+ 			var id = element.parentElement.parentElement.idName;
 
-	 			var idObject = { 
-	 				'id': id
-	 			};
+ 			// delete account and refresh accounts
+ 			deleteAccount({'id': id});
 
-	 			fetch(API_URL, {
-	 				method: 'DELETE',
-	 				body: JSON.stringify(idObject),
-	 				headers: {
-	 					'content-type': 'application/json'
-	 				}
-	 			})
-	 			.then(response => response.json())
-	 			.then(deletedAccount => {
-	 				loadingElement.style.display = 'none';
-
-	 				if (deletedAccount.failedStatus) {
-				  		console.log('Delete failed with response status ' + deletedAccount.failedStatus);
-				  		var failMessage = document.createElement('p');
-				  		failMessage.style.color = '#cf5353';
-				  		failMessage.textContent = 'Failed to delete account.';
-				  		statusElement.appendChild(failMessage);
-				  		setTimeout(function() {
-				  			failMessage.remove();
-				  		}, 3000);
-			  		} else {
-				  		console.log('Delete succeeded!');
-				  		var successMessage = document.createElement('p');
-				  		successMessage.style.color = '#53cf74';
-				  		successMessage.textContent = 'Deleted account successfully.';
-				  		statusElement.appendChild(successMessage);
-				  		setTimeout(function() {
-				  			successMessage.remove();
-				  		}, 3000);
-			  		}
-	 			});
-
-	 			// subtract amount from totals
-	 			var categoryTotalsMap = getTotals(accounts);
-	 			var category = accounts[id].category.toLowerCase();
-	 			categoryTotalsMap[category] -= accounts[id].amount;
-
-	 			// remove the account row and account from map
-	 			element.parentElement.parentElement.remove();
-	 			delete accounts[id];
-	 			console.log(accounts);
-
-	 			// refresh totals
-				const totals = document.querySelectorAll('.total');
-				totals.forEach(total => {
-					console.log(total.idName);
-					total.textContent = categoryTotalsMap[total.idName].toFixed(2);
-				});
-
-	 			console.log('Account deleted');
-	 		}
-	 	});
+ 			saveButton.style.display = 'none';
+	 		addButton.style.display = '';
+	 		editButton.style.display = '';
+ 		}
  	}
  }
 
@@ -352,3 +335,4 @@ getAccounts().then(accounts => {
 });
 
 editButton.addEventListener("click", editButtonClick);
+saveButton.addEventListener("click", saveButtonClick);
