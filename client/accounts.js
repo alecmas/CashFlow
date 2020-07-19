@@ -132,19 +132,14 @@ function buildTotalRow(table, total) {
 	table.appendChild(row);
 }
 
-// refresh the content of the total rows
-function refreshTotals(accounts) {
-
-}
-
 // display accounts to the front-end
 function displayAccounts(accounts) {
 	accountsElement.innerHTML = '';
 
 	// if no accounts exist, show message saying so
-	if(!accounts || accounts.length == 0) {
+	if(!accounts || Object.keys(accounts).length === 0) {
 		const noAccountsMessage = document.createElement('p');
-		noAccountsMessage.textContent = 'No accounts exist';
+		noAccountsMessage.textContent = 'No accounts exist.';
 		statusElement.appendChild(noAccountsMessage);
 	} else {
 		// build tables from the distinct categories of accounts
@@ -199,12 +194,12 @@ function editButtonClick() {
 }
 
 // function to PUT account updates into the db
-function putAccounts(accounts) {
+function putAccounts(updatedAccounts) {
 	loadingElement.style.display = '';
 
 	fetch(API_URL, {
 		method: 'PUT',
-		body: JSON.stringify(accounts),
+		body: JSON.stringify(updatedAccounts),
 		headers: {
 			'content-type': 'application/json'
 		}
@@ -218,26 +213,28 @@ function putAccounts(accounts) {
 	  		displayAccounts(accounts);
 	  	});
 
-	  	// show a status message for user feedback
-	  	if (updateStatus.failedStatus) {
-	  		console.log('Update failed with response status ' + updateStatus.failedStatus);
-	  		var failMessage = document.createElement('p');
-	  		failMessage.style.color = '#cf5353';
-	  		failMessage.textContent = 'Failed to update accounts.';
-	  		statusElement.appendChild(failMessage);
-	  		setTimeout(function() {
-	  			failMessage.remove();
-	  		}, 3000);
-	  	} else {
-	  		console.log('Update succeeded!');
-	  		var successMessage = document.createElement('p');
-	  		successMessage.style.color = '#53cf74';
-	  		successMessage.textContent = 'Updated accounts successfully.';
-	  		statusElement.appendChild(successMessage);
-	  		setTimeout(function() {
-	  			successMessage.remove();
-	  		}, 3000);
-	  	}
+	  	// show a status message for user feedback if an update attempt was made
+	  	if (Object.keys(updatedAccounts).length !== 0) {
+	  		if (updateStatus.failedStatus) {
+		  		console.log('Update failed with response status ' + updateStatus.failedStatus);
+		  		var failMessage = document.createElement('p');
+		  		failMessage.style.color = '#cf5353';
+		  		failMessage.textContent = 'Failed to update accounts.';
+		  		statusElement.appendChild(failMessage);
+		  		setTimeout(function() {
+		  			failMessage.remove();
+		  		}, 3000);
+		  	} else {
+		  		console.log('Update succeeded!');
+		  		var successMessage = document.createElement('p');
+		  		successMessage.style.color = '#53cf74';
+		  		successMessage.textContent = 'Updated accounts successfully.';
+		  		statusElement.appendChild(successMessage);
+		  		setTimeout(function() {
+		  			successMessage.remove();
+		  		}, 3000);
+		  	}
+		}
 	});
 }
 
