@@ -151,14 +151,14 @@ function displayAccounts(accounts) {
 			const row = buildAccountRow(id, account);
 			table.appendChild(row);
 		});
-	}
 
-	// calculate totals and append a total row to each category table
-	var totals = getTotals(accounts);
-	var tables = document.querySelector('.accounts').querySelectorAll('table');
-	tables.forEach(table => { 
-		buildTotalRow(table, totals[table.className]);
-	});
+		// calculate totals and append a total row to each category table
+		var totals = getTotals(accounts);
+		var tables = document.querySelector('.accounts').querySelectorAll('table');
+		tables.forEach(table => { 
+			buildTotalRow(table, totals[table.className]);
+		});
+	}
 
 	var addButton = document.createElement('button');
 	addButton.className = 'button-primary add';
@@ -182,6 +182,7 @@ function addButtonClick() {
 	if (element.classList.contains('add')) {
 		accountsElement.innerHTML = '';
 		accountButtonsElement.innerHTML = '';
+		statusElement.innerHTML = '';
 
 		var form = document.createElement('form');
 		form.className = 'account-form';
@@ -300,6 +301,7 @@ function editButtonClick() {
 	var element = event.target;
 	if (element.classList.contains('edit')) {
 		accountButtonsElement.innerHTML = '';
+		statusElement.innerHTML = '';
 
 		const accountRows = document.querySelectorAll('.account-row');
 		accountRows.forEach(accountRow => {

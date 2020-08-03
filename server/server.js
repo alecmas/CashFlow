@@ -5,18 +5,19 @@ const monk = require('monk');
 const app = express();
 
 const db = monk('localhost/cashflow'); // connect to the cashflow db
-const accounts = db.get('accounts');
-
+const accounts = db.get('accounts');   // get accounts collection
+const transactions = db.get('transactions');
 
 app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
 	res.json({
-		message: 'Meower!'
+		message: 'CashFlow Server'
 	});
 });
 
+/***************** BEGIN ACCOUNTS *****************/
 app.get('/accounts', (req, res) => {
 	accounts
 		.find()
@@ -101,6 +102,46 @@ app.delete('/accounts', (req, res) => {
 		console.log('[SERVER] Delete succeeded with status ' + res.statusCode);
 	}
 });
+/***************** END ACCOUNTS *****************/
+
+/***************** BEGIN TRANSACTIONS *****************/
+app.get('/transactions', (req, res) => {
+	transactions
+		.find()
+		.then(transactions => {
+			res.json(transactions);
+		});
+});
+
+app.post('/transactions', (req, res) => {
+	// insert to db
+	const transaction = {
+		transactionDate: req.body.transactionDate,
+		category: req.body.category.toString(),
+		vendor: req.body.vendor.toString(),
+		description: req.body.description.toString(),
+		amount: req.body.amount.toString(),
+		createdDate: new Date(),
+		lastModifiedDate: new Date()
+	};
+
+	transactions
+		.insert(transaction)
+		.then(createdTransaction => {
+			if (res.statusCode !== 200) {
+				res.json({
+					failedStatus: res.statusCode
+				});
+				console.log('[SERVER] Insert failed with status ' + res.statusCode);
+			} else {
+				res.json(createdTransaction);
+				console.log('[SERVER] Insert succeeded with status ' + res.statusCode);
+			}
+		});
+
+});
+
+/***************** END TRANSACTIONS *****************/
 
 app.listen(5000, () => {
 	console.log('Listening on http://localhost:5000');
