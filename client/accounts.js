@@ -193,8 +193,11 @@ function addButtonClick() {
 		var inputInstitution = document.createElement('input');
 		inputInstitution.className = 'u-full-width';
 		inputInstitution.idName = 'institution';
-		inputInstitution.setAttribute('type', 'text');
+		inputInstitution.type = 'text';
+		inputInstitution.setAttribute('pattern', '[a-zA-Z]+');
+		inputInstitution.setAttribute('title', 'Only letters are allowed');
 		inputInstitution.setAttribute('name', 'institution');
+		inputInstitution.setAttribute('required', 'required');
 
 		var labelAccountType = document.createElement('label');
 		labelAccountType.setAttribute('for', 'account-type');
@@ -202,8 +205,11 @@ function addButtonClick() {
 		var inputAccountType = document.createElement('input');
 		inputAccountType.className = 'u-full-width';
 		inputAccountType.idName = 'account-type';
-		inputAccountType.setAttribute('type', 'text');
+		inputAccountType.type = 'text';
+		inputAccountType.setAttribute('pattern', '[a-zA-Z]+');
+		inputAccountType.setAttribute('title', 'Only letters are allowed');
 		inputAccountType.setAttribute('name', 'account-type');
+		inputAccountType.setAttribute('required', 'required');
 
 		var labelAmount = document.createElement('label');
 		labelAmount.setAttribute('for', 'amount');
@@ -211,8 +217,11 @@ function addButtonClick() {
 		var inputAmount = document.createElement('input');
 		inputAmount.className = 'u-full-width';
 		inputAmount.idName = 'amount';
-		inputAmount.setAttribute('type', 'text');
+		inputAmount.type = 'number';
+		inputAmount.setAttribute('min', '0.01');
+		inputAmount.setAttribute('step', '0.01');
 		inputAmount.setAttribute('name', 'amount');
+		inputAmount.setAttribute('required', 'required');
 
 		var labelCategory = document.createElement('label');
 		labelCategory.setAttribute('for', 'category');
@@ -220,8 +229,11 @@ function addButtonClick() {
 		var inputCategory = document.createElement('input');
 		inputCategory.className = 'u-full-width';
 		inputCategory.idName = 'category';
-		inputCategory.setAttribute('type', 'text');
+		inputCategory.type = 'text';
+		inputCategory.setAttribute('pattern', '[a-zA-Z]+');
+		inputCategory.setAttribute('title', 'Only letters are allowed');
 		inputCategory.setAttribute('name', 'category');
+		inputCategory.setAttribute('required', 'required');
 
 		var buttonDiv = document.createElement('div');
 		buttonDiv.style.textAlign = 'center';
@@ -294,8 +306,12 @@ function editButtonClick() {
 			const cellAmount = accountRow.querySelector('.amount');
 			const inputAmount = document.createElement('input');
 			inputAmount.className = 'amount-input';
-			inputAmount.type = 'text';
-			inputAmount.value = cellAmount.textContent;
+			inputAmount.type = 'number';
+			inputAmount.setAttribute('min', '0.01');
+			inputAmount.setAttribute('step', '0.01');
+			inputAmount.setAttribute('name', 'amount');
+			inputAmount.setAttribute('required', 'required');
+			inputAmount.value = parseFloat(cellAmount.textContent).toFixed(2);
 			cellAmount.textContent = '';
 			cellAmount.appendChild(inputAmount);
 
@@ -404,6 +420,7 @@ function saveEditButtonClick() {
  	}
 }
 
+// function to DELETE account from the db
 function deleteAccount(id) {
 	fetch(API_URL, {
 		method: 'DELETE',
