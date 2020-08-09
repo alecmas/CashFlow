@@ -195,8 +195,8 @@ function addButtonClick() {
 		inputInstitution.className = 'u-full-width';
 		inputInstitution.idName = 'institution';
 		inputInstitution.type = 'text';
-		inputInstitution.setAttribute('pattern', '[a-zA-Z]+');
-		inputInstitution.setAttribute('title', 'Only letters are allowed');
+		// inputInstitution.setAttribute('pattern', '[a-zA-Z][a-zA-Z ]+');
+		// inputInstitution.setAttribute('title', 'Only letters are allowed');
 		inputInstitution.setAttribute('name', 'institution');
 		inputInstitution.setAttribute('required', 'required');
 
@@ -207,8 +207,8 @@ function addButtonClick() {
 		inputAccountType.className = 'u-full-width';
 		inputAccountType.idName = 'account-type';
 		inputAccountType.type = 'text';
-		inputAccountType.setAttribute('pattern', '[a-zA-Z]+');
-		inputAccountType.setAttribute('title', 'Only letters are allowed');
+		// inputAccountType.setAttribute('pattern', '[a-zA-Z][a-zA-Z ]+');
+		// inputAccountType.setAttribute('title', 'Only letters are allowed');
 		inputAccountType.setAttribute('name', 'account-type');
 		inputAccountType.setAttribute('required', 'required');
 
@@ -219,7 +219,6 @@ function addButtonClick() {
 		inputAmount.className = 'u-full-width';
 		inputAmount.idName = 'amount';
 		inputAmount.type = 'number';
-		inputAmount.setAttribute('min', '0.01');
 		inputAmount.setAttribute('step', '0.01');
 		inputAmount.setAttribute('name', 'amount');
 		inputAmount.setAttribute('required', 'required');
@@ -231,8 +230,8 @@ function addButtonClick() {
 		inputCategory.className = 'u-full-width';
 		inputCategory.idName = 'category';
 		inputCategory.type = 'text';
-		inputCategory.setAttribute('pattern', '[a-zA-Z]+');
-		inputCategory.setAttribute('title', 'Only letters are allowed');
+		// inputCategory.setAttribute('pattern', '[a-zA-Z][a-zA-Z ]+');
+		// inputCategory.setAttribute('title', 'Only letters are allowed');
 		inputCategory.setAttribute('name', 'category');
 		inputCategory.setAttribute('required', 'required');
 

@@ -1,0 +1,28 @@
+.transactions table {
+	margin: 0 auto;
+	width: 70%;
+	text-align: left;
+	padding-bottom: 20px;
+}
+
+.transactions td {
+	width: 10%;
+}
+
+.transactions th:nth-child(5) {
+	text-align: right;
+}
+
+.transactions td:nth-child(5) {
+	text-align: right;
+}
+
+.transaction-form {
+	width: 50%;
+	margin: 0 auto;
+}
+
+.transaction-buttons {
+	text-align: center;
+	margin-bottom: 10px;
+}

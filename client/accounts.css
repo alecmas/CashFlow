@@ -1,0 +1,28 @@
+.accounts table {
+	margin: 0 auto;
+	width: 70%;
+	text-align: left;
+	padding-bottom: 20px;
+}
+
+.accounts td {
+	width: 10%;
+}
+
+.accounts th:nth-child(3) {
+	text-align: right;
+}
+
+.accounts td:nth-child(3) {
+	text-align: right;
+}
+
+.account-form {
+	width: 50%;
+	margin: 0 auto;
+}
+
+.account-buttons {
+	text-align: center;
+	margin-bottom: 10px;
+}

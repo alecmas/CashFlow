@@ -107,7 +107,9 @@ function buildTotalRow(table, total) {
 	const row = document.createElement('tr');
 	row.className = 'total-row';
 
-	const cellBlank = document.createElement('td');
+	const cellBlank1 = document.createElement('td');
+	const cellBlank2 = document.createElement('td');
+	const cellBlank3 = document.createElement('td');
 
 	const cellTotalLabel = document.createElement('td');
 	cellTotalLabel.textContent = 'Total:';
@@ -117,7 +119,9 @@ function buildTotalRow(table, total) {
 	cellTotalAmount.className = 'total';
 	cellTotalAmount.textContent = total.toFixed(2);
 
-	row.appendChild(cellBlank);
+	row.appendChild(cellBlank1);
+	row.appendChild(cellBlank2);
+	row.appendChild(cellBlank3);
 	row.appendChild(cellTotalLabel);
 	row.appendChild(cellTotalAmount);
 	table.appendChild(row);
@@ -199,8 +203,8 @@ function addButtonClick() {
 		inputCategory.className = 'u-full-width';
 		inputCategory.idName = 'category';
 		inputCategory.type = 'text';
-		//inputCategory.setAttribute('pattern', '[a-zA-Z][a-zA-Z\s]+');
-		//inputCategory.setAttribute('title', 'Only letters are allowed');
+		// inputCategory.setAttribute('pattern', '[a-zA-Z][a-zA-Z ]+');
+		// inputCategory.setAttribute('title', 'Only letters are allowed');
 		inputCategory.setAttribute('name', 'category');
 		inputCategory.setAttribute('required', 'required');
 
@@ -211,8 +215,8 @@ function addButtonClick() {
 		inputVendor.className = 'u-full-width';
 		inputVendor.idName = 'vendor';
 		inputVendor.type = 'text';
-		//inputVendor.setAttribute('pattern', '[a-zA-Z][a-zA-Z\s]+');
-		//inputVendor.setAttribute('title', 'Only letters are allowed');
+		// inputVendor.setAttribute('pattern', '[a-zA-Z][a-zA-Z ]+');
+		// inputVendor.setAttribute('title', 'Only letters are allowed');
 		inputVendor.setAttribute('name', 'vendor');
 		inputVendor.setAttribute('required', 'required');
 
@@ -223,8 +227,8 @@ function addButtonClick() {
 		inputDescription.className = 'u-full-width';
 		inputDescription.idName = 'description';
 		inputDescription.type = 'text';
-		//inputDescription.setAttribute('pattern', '[a-zA-Z]+');
-		//inputDescription.setAttribute('title', 'Only letters are allowed');
+		// inputDescription.setAttribute('pattern', '[a-zA-Z][a-zA-Z ]+');
+		// inputDescription.setAttribute('title', 'Only letters are allowed');
 		inputDescription.setAttribute('name', 'description');
 		inputDescription.setAttribute('required', 'required');
 
@@ -235,7 +239,6 @@ function addButtonClick() {
 		inputAmount.className = 'u-full-width';
 		inputAmount.idName = 'amount';
 		inputAmount.type = 'number';
-		inputAmount.setAttribute('min', '0.01');
 		inputAmount.setAttribute('step', '0.01');
 		inputAmount.setAttribute('name', 'amount');
 		inputAmount.setAttribute('required', 'required');
