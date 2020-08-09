@@ -31,7 +31,7 @@ async function getTransactions() {
 	return transactionsMap;
 }
 
-// builds tables from distinct categories of accounts
+// builds table of transactions
 function buildTable() {
 	const table = document.createElement('table');
 	table.className = 'transactions-table';
@@ -296,7 +296,7 @@ function addButtonClick() {
 				.then(createdTransaction => {
 				  	console.log(createdTransaction);
 
-					// refresh accounts after add to db
+					// refresh transactions after add to db
 				  	getTransactions().then(transactions => {
 				  		displayTransactions(transactions);
 				  	});
@@ -314,9 +314,192 @@ function addButtonClick() {
 // when edit button is clicked, convert amount fields to inputs to allow for changes
 function editButtonClick() {
 	console.log('edit clicked');
+
+	var element = event.target;
+	if (element.classList.contains('edit')) {
+		transactionButtonsElement.innerHTML = '';
+		statusElement.innerHTML = '';
+
+		const transactionRows = document.querySelectorAll('.transaction-row');
+		transactionRows.forEach(transactionRow => {
+			const cellAmount = transactionRow.querySelector('.amount');
+			const inputAmount = document.createElement('input');
+			inputAmount.className = 'amount-input';
+			inputAmount.type = 'number';
+			inputAmount.setAttribute('min', '0.01');
+			inputAmount.setAttribute('step', '0.01');
+			inputAmount.setAttribute('name', 'amount');
+			inputAmount.setAttribute('required', 'required');
+			inputAmount.value = parseFloat(cellAmount.textContent).toFixed(2);
+			cellAmount.textContent = '';
+			cellAmount.appendChild(inputAmount);
+
+			// create trash can row for deletion
+			const deleteIcon = document.createElement('i');
+			deleteIcon.className = 'material-icons delete';
+			deleteIcon.textContent = 'delete_forever';
+			deleteIcon.style.color = 'red';
+			deleteIcon.addEventListener("click", deleteButtonClick);
+			cellAmount.appendChild(deleteIcon);
+		});
+
+		var saveEditButton = document.createElement('button');
+		saveEditButton.className = 'button-primary save-edit';
+		saveEditButton.textContent = 'Save Changes';
+		saveEditButton.addEventListener("click", saveEditButtonClick);
+
+		transactionButtonsElement.appendChild(saveEditButton);
+	}
 }
 
-// GET the accounts then display them
+// when delete button is clicked, delete the transaction from the db
+function deleteButtonClick() {
+ 	var element = event.target;
+ 	if (element.classList.contains('delete')) {
+ 		var confirmation = confirm('Are you sure you\'d like to delete this transaction?');
+
+ 		if (confirmation) {
+ 			loadingElement.style.display = '';
+ 			var id = element.parentElement.parentElement.idName;
+
+ 			// delete transaction and refresh transactions
+ 			deleteTransaction({'id': id});
+
+ 			var saveEditButton = document.querySelector('.save-edit');
+ 			saveEditButton.remove();
+
+	 		transactionButtonsElement.style.display = '';
+ 		}
+ 	}
+ }
+
+ // function to DELETE transaction from the db
+function deleteTransaction(id) {
+	fetch(API_URL, {
+		method: 'DELETE',
+		body: JSON.stringify(id),
+		headers: {
+			'content-type': 'application/json'
+		}
+	})
+	.then(response => response.json())
+	.then(updateStatus => {
+		// refresh transactions after update to db
+	  	getTransactions().then(transactions => {
+	  		displayTransactions(transactions);
+	  	});
+
+		if (updateStatus.failedStatus) {
+	  		console.log('Delete failed with response status ' + updateStatus.failedStatus);
+	  		var failMessage = document.createElement('p');
+	  		failMessage.style.color = '#cf5353';
+	  		failMessage.textContent = 'Failed to delete transaction.';
+	  		statusElement.appendChild(failMessage);
+	  		setTimeout(function() {
+	  			failMessage.remove();
+	  		}, 3000);
+		} else {
+	  		console.log('Delete succeeded!');
+	  		var successMessage = document.createElement('p');
+	  		successMessage.style.color = '#53cf74';
+	  		successMessage.textContent = 'Deleted transaction successfully.';
+	  		statusElement.appendChild(successMessage);
+	  		setTimeout(function() {
+	  			successMessage.remove();
+	  		}, 3000);
+		}
+	});
+}
+
+// when save button is clicked, post changes to the db
+function saveEditButtonClick() {
+	var element = event.target;
+ 	if (element.classList.contains('save-edit')) {
+ 		transactionButtonsElement.innerHTML = '';
+ 		loadingElement.style.display = '';
+
+ 		// get transactions from db for comparison
+ 		getTransactions().then(transactions => {
+			// map to hold updated values
+			var updatedTransactions = {};
+
+	 		const transactionRows = document.querySelectorAll('.transaction-row');
+			transactionRows.forEach(transactionRow => {
+				const id = transactionRow.idName;
+				const inputAmount = transactionRow.querySelector('.amount-input');
+
+				if (transactions[id].amount !== inputAmount.value) {
+					updatedTransactions[id] = inputAmount.value;
+				}
+	 		});
+
+			// perform update and refresh transactions
+			putTransactions(updatedTransactions);
+
+	 		element.remove();
+
+	 		var addButton = document.createElement('button');
+			addButton.className = 'button-primary add';
+			addButton.textContent = 'Add Transaction';
+			addButton.addEventListener("click", addButtonClick);
+			transactionButtonsElement.appendChild(addButton);
+
+			var editButton = document.createElement('button');
+			editButton.className = 'button-primary edit';
+			editButton.textContent = 'Edit Transactions';
+			editButton.addEventListener("click", editButtonClick);
+			transactionButtonsElement.appendChild(editButton);
+ 		});
+ 	}
+}
+
+
+// function to PUT transaction updates into the db
+function putTransactions(updatedTransactions) {
+	loadingElement.style.display = '';
+
+	fetch(API_URL, {
+		method: 'PUT',
+		body: JSON.stringify(updatedTransactions),
+		headers: {
+			'content-type': 'application/json'
+		}
+	})
+	.then(response => response.json())
+	.then(updateStatus => {
+		loadingElement.style.display = 'none';
+	  	
+		// refresh transactions after update to db
+	  	getTransactions().then(transactions => {
+	  		displayTransactions(transactions);
+	  	});
+
+	  	// show a status message for user feedback if an update attempt was made
+	  	if (Object.keys(updatedTransactions).length !== 0) {
+	  		if (updateStatus.failedStatus) {
+		  		console.log('Update failed with response status ' + updateStatus.failedStatus);
+		  		var failMessage = document.createElement('p');
+		  		failMessage.style.color = '#cf5353';
+		  		failMessage.textContent = 'Failed to update transactions.';
+		  		statusElement.appendChild(failMessage);
+		  		setTimeout(function() {
+		  			failMessage.remove();
+		  		}, 3000);
+		  	} else {
+		  		console.log('Update succeeded!');
+		  		var successMessage = document.createElement('p');
+		  		successMessage.style.color = '#53cf74';
+		  		successMessage.textContent = 'Updated transactions successfully.';
+		  		statusElement.appendChild(successMessage);
+		  		setTimeout(function() {
+		  			successMessage.remove();
+		  		}, 3000);
+		  	}
+		}
+	});
+}
+
+// GET the transactions then display them
 getTransactions().then(transactions => {
 	displayTransactions(transactions);
 });

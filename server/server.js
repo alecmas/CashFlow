@@ -87,7 +87,7 @@ app.put('/accounts', (req, res) => {
 });
 
 app.delete('/accounts', (req, res) => {
-	console.log('Accound ID ' + req.body.id + ' deleted');
+	console.log('Account ID ' + req.body.id + ' deleted');
 	accounts.remove({_id: req.body.id});
 
 	if (res.statusCode !== 200) {
@@ -141,6 +141,42 @@ app.post('/transactions', (req, res) => {
 
 });
 
+app.put('/transactions', (req, res) => {
+	Object.entries(req.body).forEach(([id, amount]) => {
+		transactions.update({_id: id}, {$set: {amount: amount.toString()}});
+		transactions.update({_id: id}, {$set: {lastModifiedDate: new Date()}});
+		console.log('[SERVER] Transaction ID ' + id + ' was successfully updated');
+	});
+
+	if (res.statusCode !== 200) {
+		res.json({
+			failedStatus: res.statusCode
+		});
+		console.log('[SERVER] Update failed with status ' + res.statusCode);
+	} else {
+		res.json({
+			successStatus: res.statusCode
+		});
+		console.log('[SERVER] Update succeeded with status ' + res.statusCode);
+	}
+});
+
+app.delete('/transactions', (req, res) => {
+	console.log('Transaction ID ' + req.body.id + ' deleted');
+	transactions.remove({_id: req.body.id});
+
+	if (res.statusCode !== 200) {
+		res.json({
+			failedStatus: res.statusCode
+		});
+		console.log('[SERVER] Delete failed with status ' + res.statusCode);
+	} else {
+		res.json({
+			successStatus: res.statusCode
+		});
+		console.log('[SERVER] Delete succeeded with status ' + res.statusCode);
+	}
+});
 /***************** END TRANSACTIONS *****************/
 
 app.listen(5000, () => {
